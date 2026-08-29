@@ -1,0 +1,67 @@
+{
+  "name": "agent-loop-guard",
+  "version": "0.1.0",
+  "description": "Protect AI agents from runaway loops, repeated tool calls, and uncontrolled execution.",
+  "keywords": [
+    "ai",
+    "agent",
+    "guard",
+    "safety",
+    "loop-detection",
+    "agent-loop",
+    "llm",
+    "tool-call",
+    "runaway",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "agent-loop-guard contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agent-loop-guard/agent-loop-guard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/agent-loop-guard/agent-loop-guard/issues"
+  },
+  "homepage": "https://github.com/agent-loop-guard/agent-loop-guard#readme",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.23.0",
+    "@types/node": "^22.13.0",
+    "eslint": "^9.23.0",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.27.0",
+    "vitest": "^3.0.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}
