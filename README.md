@@ -6,9 +6,11 @@
 
 It works with **any** JavaScript/TypeScript agent implementation — OpenAI, Anthropic, LangChain, Vercel AI SDK, or your own hand-rolled loop. The core has **zero provider dependencies**, **zero runtime dependencies**, and only observes steps; it never executes your tools.
 
-[![CI](https://github.com/agent-loop-guard/agent-loop-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/agent-loop-guard/agent-loop-guard/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/agent-loop-guard.svg)](https://www.npmjs.com/package/agent-loop-guard)
+[![CI](https://github.com/OMD-123/agent-loop-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/OMD-123/agent-loop-guard/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/agent-loop-guard-js.svg)](https://www.npmjs.com/package/agent-loop-guard-js)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
+📦 **Published on npm:** [`agent-loop-guard-js`](https://www.npmjs.com/package/agent-loop-guard-js) — install with `npm install agent-loop-guard-js`.
 
 ---
 
@@ -36,15 +38,15 @@ just a few lines around your existing loop.
 ## Installation
 
 ```bash
-npm install agent-loop-guard
+npm install agent-loop-guard-js
 ```
 
 ```bash
-pnpm add agent-loop-guard
+pnpm add agent-loop-guard-js
 ```
 
 ```bash
-yarn add agent-loop-guard
+yarn add agent-loop-guard-js
 ```
 
 ---
@@ -52,7 +54,7 @@ yarn add agent-loop-guard
 ## Quick Start
 
 ```ts
-import { AgentLoopGuard } from "agent-loop-guard";
+import { AgentLoopGuard } from "agent-loop-guard-js";
 
 const guard = new AgentLoopGuard({
   maxSteps: 20,
@@ -203,7 +205,7 @@ The callback runs once per blocking decision and can never break the guard
 ### `AgentLoopGuardError`
 
 ```ts
-import { AgentLoopGuardError } from "agent-loop-guard";
+import { AgentLoopGuardError } from "agent-loop-guard-js";
 
 try {
   const decision = guard.check(step);
