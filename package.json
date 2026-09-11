@@ -1,6 +1,6 @@
 {
   "name": "agent-loop-guard-js",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Production-grade AI agent safety guard with advanced loop detection, execution bounds, and intelligent throttling. Zero-dependency, TypeScript-first.",
   "keywords": [
     "ai",
