@@ -1,419 +1,135 @@
-# agent-loop-guard
+# 🛡️ agent-loop-guard-js
 
-**Protect AI agents from runaway loops, repeated tool calls, and uncontrolled execution.**
+**Stop runaway AI agents before they burn your tokens, time, and money.**
 
-`agent-loop-guard` is a provider-independent safety and reliability utility for AI agents. It detects and stops runaway agent execution before an agent gets stuck calling the same tools forever, cycling between tools, exceeding a step budget, or running for too long.
+`agent-loop-guard-js` is a high-performance, provider-independent safety utility for AI agents. It detects and blocks runaway execution—such as infinite loops, repeated tool calls, and circular patterns—before they happen.
 
-It works with **any** JavaScript/TypeScript agent implementation — OpenAI, Anthropic, LangChain, Vercel AI SDK, or your own hand-rolled loop. The core has **zero provider dependencies**, **zero runtime dependencies**, and only observes steps; it never executes your tools.
-
-[![CI](https://github.com/OMD-123/agent-loop-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/OMD-123/agent-loop-guard/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/agent-loop-guard-js.svg)](https://www.npmjs.com/package/agent-loop-guard-js)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-
-📦 **Published on npm:** [`agent-loop-guard-js`](https://www.npmjs.com/package/agent-loop-guard-js) — install with `npm install agent-loop-guard-js`.
-
----
-
-## Why?
-
-An LLM-driven agent is just a loop:
-
-```
-LLM → tool → LLM → tool → LLM → ...
-```
-
-Sometimes that loop goes wrong:
-
-- It calls the **same tool with the same arguments** a hundred times.
-- It **hammer a single tool** that keeps returning an error.
-- It falls into a **circular pattern** (`toolA → toolB → toolA → toolB …`).
-- It simply never stops, burning tokens, time, and money.
-
-`agent-loop-guard` sits *in front of* each step and returns a structured decision.
-You stop the run when it says `allowed: false`. No magic, no framework lock-in —
-just a few lines around your existing loop.
+[![CI](https://github.com/OMD-123/agent-loop-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/OMD-123/agent-loop-guard/actions/workflows/ci.yml)
 
 ---
 
-## Installation
+## 🚀 Why do you need this?
+
+AI agents are essentially loops: `LLM → tool → LLM → tool`. When these loops fail, they fail expensively:
+
+- **The Hammer**: Calling the same tool with the same arguments 100 times.
+- **The Error Loop**: Hammering a tool that consistently returns an error.
+- **The Orbit**: Falling into circular patterns (`Tool A` $\rightarrow$ `Tool B` $\rightarrow$ `Tool A`).
+- **The Runaway**: Simply never stopping, draining your API credits.
+
+`agent-loop-guard-js` sits between your agent and its tools, returning a structured `allowed: boolean` decision. **Zero provider dependencies. Zero runtime dependencies. Total control.**
+
+---
+
+## 📦 Installation
 
 ```bash
 npm install agent-loop-guard-js
-```
-
-```bash
+# or
 pnpm add agent-loop-guard-js
-```
-
-```bash
+# or
 yarn add agent-loop-guard-js
 ```
 
 ---
 
-## Quick Start
+## ⚡ Quick Start
 
 ```ts
 import { AgentLoopGuard } from "agent-loop-guard-js";
 
 const guard = new AgentLoopGuard({
-  maxSteps: 20,
-  maxDuration: 60_000,
-  maxRepeatedCalls: 3,
-  maxSameToolCalls: 5,
+  maxSteps: 20,           // Stop after 20 total steps
+  maxDuration: 60_000,    // Stop after 60 seconds
+  maxRepeatedCalls: 3,    // Stop if same tool + args called 3x
+  maxSameToolCalls: 5,    // Stop if any tool is called 5x in a row
 });
 
 function beforeEachStep(step) {
   const decision = guard.check(step);
   if (!decision.allowed) {
-    throw new Error(decision.reason);
+    throw new Error(`Agent Guard Blocked: ${decision.reason}`);
   }
-  // Agent executes the approved step.
+  // Execute the approved step...
 }
 ```
 
 ---
 
-## Features
+## ✨ Features
 
-| Protection            | Config key              | Detects                                                        |
-| --------------------- | ----------------------- | -------------------------------------------------------------- |
-| Maximum steps         | `maxSteps`              | Too many steps in a single run.                                |
-| Maximum duration      | `maxDuration`           | Run exceeds a wall-clock/time budget (monotonic clock).         |
-| Repeated calls        | `maxRepeatedCalls`      | Same tool + same arguments called over and over.               |
-| Same tool             | `maxSameToolCalls`      | One tool hammered in a row, regardless of arguments.           |
-| Circular patterns     | `loopPatternWindow`     | Repeating sequences like `A → B → A → B` or `A → B → C → A …`. |
+| Protection | Config Key | Detects |
+| :--- | :--- | :--- |
+| **Step Budget** | `maxSteps` | Total steps exceeded in a single run. |
+| **Time Budget** | `maxDuration` | Run exceeds wall-clock limit (monotonic). |
+| **Repetition** | `maxRepeatedCalls` | Identical tool + arguments called repeatedly. |
+| **Tool Hammering**| `maxSameToolCalls` | Single tool called consecutively regardless of args. |
+| **Circular Loops** | `loopPatternWindow` | Repeating sequences (e.g., `A → B → A → B`). |
 
-Plus:
-
-- **Deterministic argument canonicalization** — `{a:1,b:2}` equals `{b:2,a:1}`;
-  safe to use on untrusted input (no `eval`, never crashes on circular refs).
-- **Strongly typed** event model — add new step types without breaking changes.
-- **Lifecycle methods** — `start()`, `check()`, `end()`, and `reset()`.
-- **Runtime statistics** — `stats()`.
-- **Violation hooks** — `onViolation` callback.
-- **Structured errors** — `AgentLoopGuardError`.
-- **Zero runtime dependencies**, ESM-only, Tree-shakeable.
+### Technical Highlights:
+- **Deterministic Canonicalization**: Arguments are normalized so `{a:1,b:2}` equals `{b:2,a:1}`.
+- **Zero-Dependency**: No bloat. Works in Node.js, Bun, and Deno.
+- **O(1) Memory Growth**: History is bounded; it will never crash your process on long runs.
+- **Strongly Typed**: Full TypeScript support for a seamless DX.
 
 ---
 
-## API
+## 🛠️ API Reference
 
 ### `new AgentLoopGuard(options?)`
-
-Construct a guard. All limits are optional; omitting one disables that
-protection (unlimited budget). Configuration is validated at construction time —
-invalid config throws a clear error (e.g. negative `maxSteps`).
+Constructs a guard. All options are optional (0 = unlimited).
 
 ```ts
 interface AgentLoopGuardOptions {
-  /** Max number of steps (llm + tool + custom) per run. 0 = unlimited. */
   maxSteps?: number;
-  /** Max run duration in ms (monotonic). 0 = unlimited. */
   maxDuration?: number;
-  /** Max consecutive identical (name + args) calls. 0 = disabled. */
   maxRepeatedCalls?: number;
-  /** Max consecutive same-tool calls. 0 = disabled. */
   maxSameToolCalls?: number;
-  /** Window length for circular-pattern detection. 0 = disabled (min 2). */
   loopPatternWindow?: number;
-  /** Compare arguments for repeated-call detection. Default: true. */
   detectDuplicateArguments?: boolean;
-  /** Fired once per blocking decision. */
   onViolation?: (event: ViolationEvent) => void;
 }
 ```
 
-### `guard.start(timestamp?)` / `guard.check(step)` / `guard.end()`
+### Core Lifecycle
+- `guard.start()`: Records the start time of a run.
+- `guard.check(step)`: Validates the next step. Returns a `GuardDecision`.
+- `guard.end()`: Closes the current run.
+- `guard.reset()`: Clears all history for a fresh start.
 
-Explicit lifecycle. `start()` records the run's start time; `check()` validates
-the next step; `end()` closes the run.
-
-### `guard.check(step)` — lazy mode
-
-`check()` **lazily starts** a run on the first call, so `start()` is optional
-for simple integrations. After `reset()` or `end()`, the next `check()` begins a
-fresh run. A step may carry its own `timestamp` (ms) to drive the duration clock
-on the same timeline as your agent.
-
-```ts
-const decision = guard.check({
-  type: "tool",
-  name: "web_search",
-  arguments: { query: "Node.js" },
-  timestamp: Date.now(),
-});
-```
-
-`check()` **never throws**. It returns a `GuardDecision`:
-
-```ts
-type GuardDecision =
-  | { allowed: true; stepCount: number }
-  | {
-      allowed: false;
-      reason: GuardReason;   // one of the reasons below
-      stepCount: number;
-      details?: Record<string, unknown>;
-    };
-
-type GuardReason =
-  | "MAX_STEPS_EXCEEDED"
-  | "MAX_DURATION_EXCEEDED"
-  | "REPEATED_CALL_LIMIT_EXCEEDED"
-  | "SAME_TOOL_LIMIT_EXCEEDED"
-  | "LOOP_PATTERN_DETECTED";
-```
-
-A blocked step is **not** committed to the run's history, so a violation never
-poisons a subsequent run after `reset()`.
-
-### `guard.reset()`
-
-Clears all state (step count, history, timers, detector counters) so the same
-instance can guard an independent run.
-
-### `guard.stats()`
-
-```ts
-{
-  stepCount: 12,
-  toolCalls: 8,
-  llmCalls: 4,
-  duration: 4210,      // ms, monotonic
-  uniqueTools: 3,
-  repeatedCalls: 2
-}
-```
-
-Read-only — each call returns a fresh snapshot.
-
-### `onViolation` event
-
-```ts
-const guard = new AgentLoopGuard({
-  onViolation: (event) => {
-    // { reason, stepCount, timestamp, details? }
-    console.warn(`Guard blocked run: ${event.reason}`);
-  },
-});
-```
-
-The callback runs once per blocking decision and can never break the guard
-(exceptions are swallowed).
-
-### `AgentLoopGuardError`
-
-```ts
-import { AgentLoopGuardError } from "agent-loop-guard-js";
-
-try {
-  const decision = guard.check(step);
-  if (!decision.allowed) throw new AgentLoopGuardError(decision);
-} catch (err) {
-  if (err instanceof AgentLoopGuardError) {
-    err.reason;     // GuardReason
-    err.stepCount;  // number
-    err.decision;   // the full GuardDecision
-  }
-}
-```
+### The `GuardDecision`
+`check()` returns a decision object:
+- `allowed: true` $\rightarrow$ Proceed with execution.
+- `allowed: false` $\rightarrow$ Stop the agent. Includes a `reason` (e.g., `LOOP_PATTERN_DETECTED`).
 
 ---
 
-## Configuration
-
-All limits default to `0` (disabled), so a guard with no options never blocks —
-wire in only the protections you want.
-
-```ts
-// Only guard against runaway repetition; leave steps/duration unlimited.
-const guard = new AgentLoopGuard({
-  maxRepeatedCalls: 3,
-  maxSameToolCalls: 5,
-  loopPatternWindow: 6,
-});
-```
-
-Invalid configuration is rejected at construction:
-
-| Invalid input                       | Result                                  |
-| ----------------------------------- | --------------------------------------- |
-| `maxSteps: -1`                      | throws                                   |
-| `maxDuration: -5`                   | throws                                   |
-| `maxSteps: 2.5` (non-integer)      | throws                                   |
-| `loopPatternWindow: 1` (min is 2)   | throws                                   |
-| `onViolation: "nope"` (non-fn)      | throws                                   |
-
----
-
-## Examples
-
-### Basic agent
-
-```ts
-const guard = new AgentLoopGuard({
-  maxSteps: 20,
-  maxRepeatedCalls: 3,
-  maxSameToolCalls: 5,
-});
-
-for await (const step of agent.run()) {
-  const decision = guard.check(step);
-  if (!decision.allowed) {
-    console.error("Agent stopped:", decision.reason);
-    break;
-  }
-  // Application executes the approved step here.
-}
-```
-
-### Tool loop / repeated calls
-
-```ts
-const guard = new AgentLoopGuard({
-  maxRepeatedCalls: 3,
-  onViolation: (e) => console.warn("Violation:", e.reason),
-});
-
-for (const q of queries) {
-  const decision = guard.check({
-    type: "tool",
-    name: "search",
-    arguments: { query: q },
-  });
-  if (!decision.allowed) {
-    console.error("Loop detected:", decision.reason);
-    break;
-  }
-}
-```
-
-### Budget / step protection
-
-```ts
-const guard = new AgentLoopGuard({ maxSteps: 20, maxDuration: 30_000 });
-guard.start();
-
-while (agent.shouldContinue()) {
-  const step = agent.nextStep();
-  const decision = guard.check(step);
-  if (!decision.allowed) {
-    console.log("Budget exceeded:", decision.reason, guard.stats());
-    break;
-  }
-}
-guard.end();
-```
-
-Runnable examples live in [`examples/`](./examples): `basic.ts`, `tool-loop.ts`,
-and `agent.ts` (a generic async agent stub).
-
----
-
-## Framework Independence
-
-`agent-loop-guard` is **observer-only**. It receives a description of each step
-and tells you whether to proceed. It never imports OpenAI, Anthropic, LangChain,
-the Vercel AI SDK, or Google AI — and never executes your tools.
-
-```
-Agent ──▶ agent-loop-guard ──▶ ALLOW ──▶ Tool executes
-                       └────▶ BLOCK ──▶ Agent stops
-```
-
-This is why it drops into any architecture: you wrap your existing step stream,
-and your agent keeps full control over execution.
-
----
-
-## Architecture
+## 📐 Architecture
 
 ```mermaid
 flowchart LR
-  A[Agent / Your Code] -->|step| G[AgentLoopGuard.check]
-  G --> D1[MaxStepsDetector]
-  G --> D2[DurationDetector]
-  G --> D3[RepetitionDetector]
-  G --> D4[SameToolDetector]
-  G --> D5[LoopPatternDetector]
-  D1 --> R{Decision}
-  D2 --> R
-  D3 --> R
-  D4 --> R
-  D5 --> R
-  R -->|allowed| O[Execute approved step]
-  R -->|blocked| V[onViolation + stop]
-```
-
-The guard is a composition of small, focused **detectors** (strategy pattern).
-Each detector is stateless with respect to history — it reads shared `GuardState`
-and keeps only a tiny, bounded counter of its own. Adding a new protection means
-adding one detector file and wiring it into the array in `AgentLoopGuard`;
-nothing else changes.
-
-**Algorithmic notes**
-
-- **Canonicalization** (`normalization/canonicalize.ts`) recursively normalizes
-  arguments into a stable, type-prefixed string. Object keys are sorted so order
-  is irrelevant; a `WeakSet` tracks seen objects so circular references collapse
-  to a sentinel instead of throwing. O(depth × nodes) per call.
-- **Loop detection** inspects only the trailing `loopPatternWindow` of history
-  and tests each period `p ∈ [1 … ⌊W/2⌋`, returning the smallest period that
-  explains the whole window. O(W²) work per step, bounded by the window.
-- **History** is bounded to `max(loopPatternWindow, 2 × maxSameToolCalls)`, so
-  memory stays flat even on very long runs — no unbounded growth.
-
----
-
-## Contributing
-
-Contributions welcome! To get started:
-
-1. Fork and clone the repo.
-2. Install dependencies: `npm install`.
-3. Make your change with tests.
-4. Ensure the pipeline is green: `npm run typecheck && npm run lint && npm test`.
-5. Open a pull request.
-
-Please add tests for any new detector or behavior, and keep the public API small
-and provider-agnostic.
-
----
-
-## Development
-
-```bash
-npm install      # install dev dependencies
-npm test         # run the test suite (vitest)
-npm run build    # compile to dist/ (declarations + source maps)
-npm run typecheck
-npm run lint
-```
-
-To try the examples (needs the package built first):
-
-```bash
-npx vite-node examples/agent.ts
+  A[Agent] -->|step| G[AgentLoopGuard]
+  G --> D1[MaxSteps]
+  G --> D2[Duration]
+  G --> D3[Repetition]
+  G --> D4[SameTool]
+  G --> D5[Circular]
+  D1 & D2 & D3 & D4 & D5 --> R{Decision}
+  R -->|Allowed| O[Execute Tool]
+  R -->|Blocked| V[Stop & Alert]
 ```
 
 ---
 
-## Roadmap
+## 🤝 Contributing & Support
 
-Planned future features (not in the MVP):
+Contributions are welcome! Please ensure the pipeline is green:
+`npm run typecheck && npm run lint && npm test`
 
-- [ ] Cost limit
-- [ ] Token budget
-- [ ] Persistent run history
-- [ ] OpenTelemetry integration
-- [ ] Framework adapters
-- [ ] Streaming support improvements
-- [ ] Advanced loop detection
-- [ ] Agent trace visualization
+If this tool saves you tokens and time, consider supporting its development:
+👉 **[Sponsor on GitHub](https://github.com/sponsors/OMD-123)**
 
----
-
-## License
-
-[MIT](./LICENSE) © agent-loop-guard contributors
+## 📄 License
+MIT © [OMD-123](https://github.com/OMD-123)
