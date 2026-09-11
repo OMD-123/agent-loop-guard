@@ -1,7 +1,7 @@
 {
   "name": "agent-loop-guard",
-  "version": "0.1.0",
-  "description": "Protect AI agents from runaway loops, repeated tool calls, and uncontrolled execution.",
+  "version": "2.0.0",
+  "description": "Production-grade AI agent safety guard with advanced loop detection, execution bounds, and intelligent throttling. Zero-dependency, TypeScript-first.",
   "keywords": [
     "ai",
     "agent",
@@ -12,18 +12,31 @@
     "llm",
     "tool-call",
     "runaway",
-    "typescript"
+    "typescript",
+    "throttling",
+    "execution-bounds",
+    "rate-limiting",
+    "circuit-breaker",
+    "throttling",
+    "execution-bounds",
+    "rate-limiting",
+    "circuit-breaker"
   ],
   "license": "MIT",
-  "author": "agent-loop-guard contributors",
+  "author": {
+    "name": "OMD-123",
+    "email": "omd4485@gmail.com",
+    "url": "https://github.com/OMD-123"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/agent-loop-guard/agent-loop-guard.git"
+    "url": "https://github.com/OMD-123/agent-loop-guard.git",
+    "directory": ""
   },
   "bugs": {
-    "url": "https://github.com/agent-loop-guard/agent-loop-guard/issues"
+    "url": "https://github.com/OMD-123/agent-loop-guard/issues"
   },
-  "homepage": "https://github.com/agent-loop-guard/agent-loop-guard#readme",
+  "homepage": "https://agent-loop-guard.omd123.dev",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -48,7 +61,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "prepare": "npm run build",
+    "release": "standard-version && git push --follow-tags origin main && npm publish",
+    "postversion": "git push && git push --tags"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
@@ -56,12 +72,22 @@
     "eslint": "^9.23.0",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.7",
+    "standard-version": "^9.5.0",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser": "^8.24.0"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "allowScripts": {
     "esbuild@0.28.2": true
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/OMD-123"
+  },
+  "contributing": {
+    "url": "https://github.com/OMD-123/agent-loop-guard/blob/main/CONTRIBUTING.md"
   }
 }

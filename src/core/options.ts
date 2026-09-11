@@ -1,12 +1,6 @@
-import type { ViolationHandler } from "../types/index.js";
+import type { ViolationHandler } from "../types/index";
 
-/**
- * Configuration for {@link AgentLoopGuard}.
- *
- * Every limit is optional. When omitted, that particular protection is
- * disabled (an unlimited budget). See {@link DEFAULT_OPTIONS} for the resolved
- * defaults applied after construction.
- */
+/** Configuration for {@link AgentLoopGuard}. */
 export interface AgentLoopGuardOptions {
   /** Maximum number of steps (LLM + tool + custom) allowed in a run. */
   maxSteps?: number;
@@ -20,7 +14,13 @@ export interface AgentLoopGuardOptions {
   loopPatternWindow?: number;
   /** When false, arguments are ignored for repeated-call detection. */
   detectDuplicateArguments?: boolean;
-  /** Fired once per blocking decision. */
+  /** Maximum total steps allowed across the entire agent session (for ExecutionBoundsDetector). */
+  maxTotalSteps?: number;
+  /** Maximum total duration in ms allowed across the entire agent session (for ExecutionBoundsDetector). */
+  maxTotalDurationMs?: number;
+  /** Maximum total number of tool and LLM calls allowed (for RateLimiterDetector by total count). */
+  maxTotalCalls?: number;
+  /** Callback function invoked when a violation is detected. */
   onViolation?: ViolationHandler;
 }
 
@@ -37,17 +37,14 @@ export const DEFAULT_OPTIONS: Omit<ResolvedOptions, "onViolation"> = {
   maxSameToolCalls: 0,
   loopPatternWindow: 0,
   detectDuplicateArguments: true,
+  maxTotalSteps: 0,
+  maxTotalDurationMs: 0,
+  maxTotalCalls: 0,
 };
 
-const ERR_PREFIX = "agent-loop-guard: invalid configuration";
-
-/**
- * Validate user-supplied options and fill in defaults.
- * Throws a clear, typed error rather than silently accepting bad config.
- */
 export function resolveOptions(input: AgentLoopGuardOptions = {}): ResolvedOptions {
   if (typeof input !== "object" || input === null) {
-    throw new Error(`${ERR_PREFIX}: expected an options object, received ${String(input)}`);
+    throw new Error('agent-loop-guard: invalid configuration: expected an options object, received ' + String(input));
   }
 
   const out: ResolvedOptions = {
@@ -57,7 +54,15 @@ export function resolveOptions(input: AgentLoopGuardOptions = {}): ResolvedOptio
     maxSameToolCalls: pick(input.maxSameToolCalls, DEFAULT_OPTIONS.maxSameToolCalls),
     loopPatternWindow: pick(input.loopPatternWindow, DEFAULT_OPTIONS.loopPatternWindow),
     detectDuplicateArguments: input.detectDuplicateArguments ?? DEFAULT_OPTIONS.detectDuplicateArguments,
+    maxTotalSteps: pick(input.maxTotalSteps, DEFAULT_OPTIONS.maxTotalSteps),
+    maxTotalDurationMs: pick(input.maxTotalDurationMs, DEFAULT_OPTIONS.maxTotalDurationMs),
+    maxTotalCalls: pick(input.maxTotalCalls, DEFAULT_OPTIONS.maxTotalCalls),
   };
+
+  if (input.onViolation !== undefined && typeof input.onViolation !== "function") {
+    throw new Error('agent-loop-guard: invalid configuration: onViolation must be a function');
+  }
+  out.onViolation = input.onViolation;
 
   // maxSteps: unlimited(0) or a positive integer.
   assertNonNegativeInt(out.maxSteps, "maxSteps");
@@ -68,25 +73,29 @@ export function resolveOptions(input: AgentLoopGuardOptions = {}): ResolvedOptio
   // maxRepeatedCalls: 0 disables; otherwise must be >= 1.
   assertNonNegativeInt(out.maxRepeatedCalls, "maxRepeatedCalls");
   if (out.maxRepeatedCalls !== 0 && out.maxRepeatedCalls < 1) {
-    throw new Error(`${ERR_PREFIX}: maxRepeatedCalls must be >= 1 when enabled`);
+    throw new Error('agent-loop-guard: invalid configuration: maxRepeatedCalls must be >= 1 when enabled');
   }
 
   // maxSameToolCalls: 0 disables; otherwise >= 1.
   assertNonNegativeInt(out.maxSameToolCalls, "maxSameToolCalls");
   if (out.maxSameToolCalls !== 0 && out.maxSameToolCalls < 1) {
-    throw new Error(`${ERR_PREFIX}: maxSameToolCalls must be >= 1 when enabled`);
+    throw new Error('agent-loop-guard: invalid configuration: maxSameToolCalls must be >= 1 when enabled');
   }
 
   // loopPatternWindow: 0 disables; otherwise >= 2 (a loop needs >= 2 entries).
   assertNonNegativeInt(out.loopPatternWindow, "loopPatternWindow");
   if (out.loopPatternWindow !== 0 && out.loopPatternWindow < 2) {
-    throw new Error(`${ERR_PREFIX}: loopPatternWindow must be >= 2 when enabled`);
+    throw new Error('agent-loop-guard: invalid configuration: loopPatternWindow must be >= 2 when enabled');
   }
 
-  if (input.onViolation !== undefined && typeof input.onViolation !== "function") {
-    throw new Error(`${ERR_PREFIX}: onViolation must be a function`);
-  }
-  out.onViolation = input.onViolation;
+  // maxTotalSteps: unlimited(0) or a positive integer.
+  assertNonNegativeInt(out.maxTotalSteps, "maxTotalSteps");
+
+  // maxTotalDurationMs: unlimited(0) or a positive number.
+  assertNonNegativeNumber(out.maxTotalDurationMs, "maxTotalDurationMs");
+
+  // maxTotalCalls: unlimited(0) or a positive integer.
+  assertNonNegativeInt(out.maxTotalCalls, "maxTotalCalls");
 
   return out;
 }
@@ -97,12 +106,12 @@ function pick<T>(value: T | undefined, fallback: T): T {
 
 function assertNonNegativeInt(value: number, key: string): void {
   if (!Number.isInteger(value) || value < 0) {
-    throw new Error(`${ERR_PREFIX}: ${key} must be a non-negative integer, received ${String(value)}`);
+    throw new Error('agent-loop-guard: invalid configuration: ' + key + ' must be a non-negative integer, received ' + String(value));
   }
 }
 
 function assertNonNegativeNumber(value: number, key: string): void {
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
-    throw new Error(`${ERR_PREFIX}: ${key} must be a non-negative number, received ${String(value)}`);
+    throw new Error('agent-loop-guard: invalid configuration: ' + key + ' must be a non-negative number, received ' + String(value));
   }
 }

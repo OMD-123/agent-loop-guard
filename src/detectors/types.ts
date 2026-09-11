@@ -1,6 +1,8 @@
-import type { AgentStep, GuardDecision } from "../types/index.js";
-import type { GuardState } from "../core/GuardState.js";
-import type { ResolvedOptions } from "../core/options.js";
+import type { AgentStep, GuardDecision } from "../types/index";
+import type { GuardState } from "../core/GuardState";
+import type { ResolvedOptions } from "../core/options";
+
+export type { AgentStep, GuardDecision };
 
 /**
  * Context handed to each detector on every {@link AgentLoopGuard.check} call.

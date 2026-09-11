@@ -33,9 +33,12 @@ export interface AgentStep {
 export type GuardReason =
   | "MAX_STEPS_EXCEEDED"
   | "MAX_DURATION_EXCEEDED"
+  | "MAX_TOTAL_STEPS_EXCEEDED"
+  | "MAX_DURATION_EXCEEDED"
   | "REPEATED_CALL_LIMIT_EXCEEDED"
   | "SAME_TOOL_LIMIT_EXCEEDED"
-  | "LOOP_PATTERN_DETECTED";
+  | "LOOP_PATTERN_DETECTED"
+  | "RATE_LIMIT_EXCEEDED";
 
 /**
  * Result of {@link AgentLoopGuard.check}.

@@ -9,6 +9,8 @@ import { DurationDetector } from "../detectors/DurationDetector.js";
 import { RepetitionDetector } from "../detectors/RepetitionDetector.js";
 import { SameToolDetector } from "../detectors/SameToolDetector.js";
 import { LoopPatternDetector } from "../detectors/LoopPatternDetector.js";
+import { ExecutionBoundsDetector } from "../detectors/ExecutionBoundsDetector.js";
+import { RateLimiterDetector } from "../detectors/RateLimiterDetector.js";
 
 /** Monotonic clock: prefers performance.now, falls back to Date.now. */
 function nowMonotonic(): number {
@@ -25,7 +27,7 @@ function nowMonotonic(): number {
  * to drop into any agent architecture regardless of framework.
  *
  * Lifecycle: `start()` begins a run (records start time); `check()` validates
- * the next step; `end()` closes the run. For fire-and-forget usage, `check()`
+ * the next step; `end()` closes the run. For fire-and-forget usage, `check()` 
  * lazily starts the run on first call, so `start()` is optional.
  */
 export class AgentLoopGuard {
@@ -51,6 +53,8 @@ export class AgentLoopGuard {
       new RepetitionDetector(),
       new SameToolDetector(),
       new LoopPatternDetector(),
+      new ExecutionBoundsDetector(),
+      new RateLimiterDetector(),
     ];
   }
 
