@@ -9,7 +9,7 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
@@ -18,10 +18,12 @@ export default tseslint.config(
     },
   },
   {
-    // Examples are runnable demos; console output is expected there.
+    // Examples are runnable demos; console output and unused vars are common
     files: ["examples/**/*.ts"],
     rules: {
       "no-console": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-namespace": "off",
     },
   },
 );

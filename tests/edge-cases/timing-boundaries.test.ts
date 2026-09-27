@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { AgentLoopGuard } from "../../src/index.ts";
 import type { AgentStep } from "../../../src/types/index.js";
 
