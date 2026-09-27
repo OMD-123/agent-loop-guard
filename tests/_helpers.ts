@@ -11,6 +11,9 @@ export function makeOptions(overrides: Partial<ResolvedOptions> = {}): ResolvedO
     maxSameToolCalls: 0,
     loopPatternWindow: 0,
     detectDuplicateArguments: true,
+    maxTotalSteps: 0,
+    maxTotalDurationMs: 0,
+    maxTotalCalls: 0,
     ...overrides,
   };
 }
