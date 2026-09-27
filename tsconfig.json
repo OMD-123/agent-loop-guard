@@ -19,7 +19,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "allowImportingTsExtensions": true
   },
   "include": ["src", "tests", "examples"],
   "exclude": ["node_modules", "dist"]
