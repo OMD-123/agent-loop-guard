@@ -24,28 +24,36 @@ describe("AgentLoopGuard - Timing Boundaries", () => {
   });
   
   it("should stop when maxDuration exceeded", () => {
-    const guard = new AgentLoopGuard({ maxDuration: 50 }); // 50ms
-    const step: AgentStep = { type: "tool", name: "slow", arguments: {} };
+      const guard = new AgentLoopGuard({ maxDuration: 50 }); // 50ms
+      const step: AgentStep = { type: "tool", name: "slow", arguments: {} };
     
-    guard.start();
-    // Check until duration exceeded or max iterations
-    let decision: GuardDecision;
-    let iterations = 0;
-    const start = Date.now();
-    do {
-      decision = guard.check(step);
-      iterations++;
-      // Safety break to avoid infinite loop in test
-      if (iterations > 10000) break;
-    } while (decision.allowed && (Date.now() - start) < 200); // Try for 200ms max
-    guard.end();
+      guard.start();
+      // Check until duration exceeded or max iterations
+      let decision: GuardDecision;
+      let iterations = 0;
+      // Use monotonic clock like the guard does
+      const perf = (globalThis as { performance?: { now(): number } }).performance;
+      const nowMonotonic = () => perf ? perf.now() : Date.now();
+      const start = nowMonotonic();
+      do {
+        // Add small delay to ensure time passes on fast CI runners
+        if (iterations > 0) {
+          // Use step timestamp to control time
+          step.timestamp = nowMonotonic();
+        }
+        decision = guard.check(step);
+        iterations++;
+        // Safety break to avoid infinite loop in test
+        if (iterations > 10000) break;
+      } while (decision.allowed && (nowMonotonic() - start) < 200); // Try for 200ms max
+      guard.end();
     
-    // Should have stopped due to time
-    expect(decision.allowed).toBe(false);
-    if (!decision.allowed) {
-      expect(decision.reason).toMatch(/MAX_DURATION_EXCEEDED|duration/);
-    }
-  });
+      // Should have stopped due to time
+      expect(decision.allowed).toBe(false);
+      if (!decision.allowed) {
+        expect(decision.reason).toMatch(/MAX_DURATION_EXCEEDED|duration/);
+      }
+    });
   
   it("should handle zero maxDuration (unlimited)", () => {
     const guard = new AgentLoopGuard({ maxDuration: 0 }); // Unlimited
