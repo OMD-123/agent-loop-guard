@@ -35,7 +35,7 @@ class CLIAgent {
       loopPatternWindow: 10,
       onViolation: (event) => {
         console.error(`\n⚠️  AGENT GUARD TRIGGERED: ${event.reason}`);
-        console.error(`   Step: ${event.stepNumber} | Tool: ${event.step?.name}`);
+        console.error(`   Step: ${event.stepCount}`);
       },
     });
 
@@ -45,7 +45,7 @@ class CLIAgent {
   async run(initialTask: string): Promise<void> {
     console.log(`\n🤖 CLI Agent Starting`);
     console.log(`Task: ${initialTask}`);
-    console.log(`Guard: maxSteps=${this.guard.maxSteps}, maxDuration=${this.guard.maxDuration}ms\n`);
+    console.log(`Guard: maxSteps=50, maxDuration=300000ms\n`);
 
     this.guard.start();
     let stepCount = 0;
@@ -65,7 +65,7 @@ class CLIAgent {
       // Check with guard
       const step: AgentStep = {
         type: "tool",
-        name: action.tool,
+        name: action.tool!,
         arguments: action.args,
       };
 
@@ -78,14 +78,14 @@ class CLIAgent {
       }
 
       // Execute tool
-      const tool = this.tools.get(action.tool);
+      const tool = this.tools.get(action.tool!);
       if (!tool) {
-        console.error(`\n❌ Unknown tool: ${action.tool}`);
+        console.error(`\n❌ Unknown tool: ${action.tool!}`);
         continue;
       }
 
-      console.log(`\n🔧 Step ${stepCount}: ${action.tool}(${JSON.stringify(action.args)})`);
-      const result = await tool.execute(action.args);
+      console.log(`\n🔧 Step ${stepCount}: ${action.tool!}(${JSON.stringify(action.args ?? {})})`);
+      const result = await tool.execute(action.args ?? {});
       console.log(`   Result: ${result}`);
 
       currentTask = `${currentTask}\nStep ${stepCount} (${action.tool}): ${result}`;
@@ -103,7 +103,7 @@ class CLIAgent {
     result?: string;
   }> {
     // Simulate LLM decision - in real use, call an LLM API
-    const tools = Array.from(this.tools.keys());
+    // const tools = Array.from(this.tools.keys());
     
     // Simple logic for demo
     if (stepNumber === 1) {

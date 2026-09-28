@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { AgentLoopGuard } from "../../src/index.ts";
-import type { AgentStep } from "../../../src/types/index.js";
+import type { AgentStep } from "../../src/types/index.ts";
 
 describe("AgentLoopGuard - Large Argument Objects", () => {
   it("should handle large string arguments", () => {
@@ -16,7 +16,9 @@ describe("AgentLoopGuard - Large Argument Objects", () => {
     // Second call with same large string should be detected as repetition
     const decision2 = guard.check(step);
     expect(decision2.allowed).toBe(false);
-    expect(decision2.reason).toMatch(/REPEATED_CALL_LIMIT_EXCEEDED|repeated/);
+    if (!decision2.allowed) {
+      expect(decision2.reason).toMatch(/REPEATED_CALL_LIMIT_EXCEEDED|repeated/);
+    }
   });
   
   it("should handle large array arguments", () => {
@@ -29,7 +31,9 @@ describe("AgentLoopGuard - Large Argument Objects", () => {
     
     const decision2 = guard.check(step);
     expect(decision2.allowed).toBe(false);
-    expect(decision2.reason).toMatch(/REPEATED_CALL_LIMIT_EXCEEDED|repeated/);
+    if (!decision2.allowed) {
+      expect(decision2.reason).toMatch(/REPEATED_CALL_LIMIT_EXCEEDED|repeated/);
+    }
   });
   
   it("should handle large nested objects", () => {
@@ -44,7 +48,9 @@ describe("AgentLoopGuard - Large Argument Objects", () => {
     
     const decision2 = guard.check(step);
     expect(decision2.allowed).toBe(false);
-    expect(decision2.reason).toMatch(/REPEATED_CALL_LIMIT_EXCEEDED|repeated/);
+    if (!decision2.allowed) {
+      expect(decision2.reason).toMatch(/REPEATED_CALL_LIMIT_EXCEEDED|repeated/);
+    }
   });
   
   it("should not crash on extremely large objects (within reason)", () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { AgentLoopGuard } from "../../src/index.ts";
-import type { AgentStep } from "../../../src/types/index.js";
+import type { AgentStep, GuardDecision } from "../../src/types/index.ts";
 
 describe("AgentLoopGuard - Timing Boundaries", () => {
   it("should respect maxDuration with rapid calls", () => {
@@ -22,14 +22,14 @@ describe("AgentLoopGuard - Timing Boundaries", () => {
     const stats = guard.stats();
     expect(stats.duration).toBeLessThan(150); // Should not exceed by too much
   });
-
+  
   it("should stop when maxDuration exceeded", () => {
     const guard = new AgentLoopGuard({ maxDuration: 50 }); // 50ms
     const step: AgentStep = { type: "tool", name: "slow", arguments: {} };
     
     guard.start();
     // Check until duration exceeded or max iterations
-    let decision;
+    let decision: GuardDecision;
     let iterations = 0;
     const start = Date.now();
     do {
@@ -42,9 +42,11 @@ describe("AgentLoopGuard - Timing Boundaries", () => {
     
     // Should have stopped due to time
     expect(decision.allowed).toBe(false);
-    expect(decision.reason).toMatch(/MAX_DURATION_EXCEEDED|duration/);
+    if (!decision.allowed) {
+      expect(decision.reason).toMatch(/MAX_DURATION_EXCEEDED|duration/);
+    }
   });
-
+  
   it("should handle zero maxDuration (unlimited)", () => {
     const guard = new AgentLoopGuard({ maxDuration: 0 }); // Unlimited
     const step: AgentStep = { type: "tool", name: "unlimited", arguments: {} };
@@ -60,7 +62,7 @@ describe("AgentLoopGuard - Timing Boundaries", () => {
     const stats = guard.stats();
     expect(stats.stepCount).toBe(1000);
   });
-
+  
   it("should handle very small maxDuration", () => {
     const guard = new AgentLoopGuard({ maxDuration: 1 }); // 1ms
     const step: AgentStep = { type: "tool", name: "instant", arguments: {} };

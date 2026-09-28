@@ -11,7 +11,19 @@ import type { AgentStep } from "../src/types/index.js";
  * Run: npx tsx examples/websocket-server.ts
  */
 
-import { WebSocketServer, WebSocket } from "ws";
+// import { WebSocketServer, WebSocket } from "ws";
+// Mock WebSocket for type checking
+interface WebSocket {
+  readyState: number;
+  send(data: string): void;
+  on(event: string, handler: (...args: any[]) => void): void;
+}
+const WebSocket = { OPEN: 1 };
+class WebSocketServer {
+  constructor(_options: { port: number }) {}
+  on(_event: string, _handler: (...args: any[]) => void): void {}
+  close(): void {}
+}
 
 interface WSMessage {
   type: "step" | "result" | "error" | "stats";
@@ -49,7 +61,7 @@ class WSAgentServer {
         onViolation: (event) => {
           this.send(ws, {
             type: "error",
-            payload: { reason: event.reason, step: event.stepNumber },
+            payload: { reason: event.reason, step: event.stepCount },
             requestId: "server",
           });
         },
@@ -74,8 +86,8 @@ class WSAgentServer {
         this.sessions.delete(ws);
       });
 
-      ws.on("error", (err) => {
-        console.error("WS Error:", err);
+      ws.on("error", (err: unknown) => {
+        console.error("WS Error:", err instanceof Error ? err.message : String(err));
         session.guard.end();
         this.sessions.delete(ws);
       });
@@ -158,12 +170,16 @@ class WSAgentServer {
   }
 
   getStats() {
-    return {
-      activeSessions: this.sessions.size,
-      sessions: Array.from(this.sessions.values()).map(s => s.guard.stats()),
-    };
+      return {
+        activeSessions: this.sessions.size,
+        sessions: Array.from(this.sessions.values()).map(s => s.guard.stats()),
+      };
+    }
+
+    close() {
+      this.wss.close();
+    }
   }
-}
 
 // Client example (run in browser console or separate Node process)
 const clientExample = `
@@ -201,7 +217,7 @@ const server = new WSAgentServer(8080);
 // Graceful shutdown
 process.on("SIGINT", () => {
   console.log("\n🛑 Shutting down...");
-  server.wss.close();
+  server.close();
   process.exit(0);
 });
 

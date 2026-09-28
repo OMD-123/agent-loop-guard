@@ -23,12 +23,12 @@ interface AgentAction {
   log: string;
 }
 
-interface AgentFinish {
-  returnValues: any;
-  log: string;
-}
+// interface AgentFinish {
+//   returnValues: any;
+//   log: string;
+// }
 
-type AgentStepUnion = AgentAction | AgentFinish;
+// type AgentStepUnion = AgentAction | AgentFinish;
 
 /**
  * Wrapper to protect LangChain agent execution
@@ -57,7 +57,7 @@ class ProtectedLangChainAgent {
       maxSameToolCalls: options.maxSameToolCalls ?? 5,
       loopPatternWindow: 6,
       onViolation: (event) => {
-        console.error(`[LangChain Guard] ${event.reason} at step ${event.stepNumber}`);
+        console.error(`[LangChain Guard] ${event.reason} at step ${event.stepCount}`);
       },
     });
   }
@@ -175,8 +175,8 @@ async function main() {
     const answer = await agent.run("What is 2 + 2? Then search for the meaning of life.");
     console.log("Final answer:", answer);
     console.log("Guard stats:", agent.getStats());
-  } catch (error) {
-    console.error("Agent stopped:", error.message);
+  } catch (error: unknown) {
+    console.error("Agent stopped:", error instanceof Error ? error.message : String(error));
   }
 }
 
