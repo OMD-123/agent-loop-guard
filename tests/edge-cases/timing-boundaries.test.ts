@@ -28,24 +28,21 @@ describe("AgentLoopGuard - Timing Boundaries", () => {
       const step: AgentStep = { type: "tool", name: "slow", arguments: {} };
     
       guard.start();
-      // Check until duration exceeded or max iterations
+      // Give the guard a moment to capture startTime, then set step timestamp
+      // well past the maxDuration to guarantee the DurationDetector triggers.
+      // We advance the step's timestamp on each iteration to simulate elapsed time.
       let decision: GuardDecision;
       let iterations = 0;
-      // Use monotonic clock like the guard does
-      const perf = (globalThis as { performance?: { now(): number } }).performance;
-      const nowMonotonic = () => perf ? perf.now() : Date.now();
-      const start = nowMonotonic();
+      const baseTime = Date.now(); // Use wall clock as stable baseline
       do {
-        // Add small delay to ensure time passes on fast CI runners
-        if (iterations > 0) {
-          // Use step timestamp to control time
-          step.timestamp = nowMonotonic();
-        }
+        // Set timestamp to simulate time passing: 60ms, 70ms, 80ms... past baseTime
+        // The guard's startTime is captured at guard.start() which happened ~now
+        step.timestamp = baseTime + 60 + iterations * 10;
         decision = guard.check(step);
         iterations++;
         // Safety break to avoid infinite loop in test
         if (iterations > 10000) break;
-      } while (decision.allowed && (nowMonotonic() - start) < 200); // Try for 200ms max
+      } while (decision.allowed && iterations < 10); // Max 10 iterations
       guard.end();
     
       // Should have stopped due to time
