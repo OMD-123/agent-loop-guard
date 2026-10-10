@@ -1,29 +1,18 @@
-import { AgentLoopGuard } from "../src/index.js";
-import type { AgentStep } from "../src/types/index.js";
 
-// Smallest useful integration: guard a list of pre-defined steps.
-const guard = new AgentLoopGuard({
-  maxSteps: 20,
-  maxDuration: 60_000,
-  maxRepeatedCalls: 3,
-  maxSameToolCalls: 5,
-  loopPatternWindow: 6,
-});
+import { Guardrail, LoopChecker } from '../src/index.js';
 
-const steps: AgentStep[] = [
-  { type: "llm", name: "gpt-4" },
-  { type: "tool", name: "web_search", arguments: { query: "Node.js clustering" } },
-  { type: "llm", name: "gpt-4" },
-  { type: "tool", name: "web_search", arguments: { query: "Node.js clustering" } },
+const guard = new Guardrail([
+  new LoopChecker({ maxSteps: 10 })
+]);
+
+guard.start();
+
+const steps = [
+  { type: 'llm_response', content: 'Hello', timestamp: Date.now() },
+  { type: 'tool_call', tool: 'search', args: { q: 'weather' }, timestamp: Date.now() },
 ];
 
-for (const step of steps) {
-  const decision = guard.check(step);
-  if (!decision.allowed) {
-    console.error(`Stopped: ${decision.reason}`);
-    break;
-  }
-  // Application executes the approved step here.
-}
-
-console.log("stats:", guard.stats());
+steps.forEach(step => {
+  const decision = guard.check(step as any);
+  console.log(`Step allowed: ${decision.allowed}`);
+});

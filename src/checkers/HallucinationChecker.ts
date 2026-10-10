@@ -26,8 +26,10 @@ export class HallucinationChecker implements Checker {
     const lastToolCall = [...history].reverse().find(h => h.type === 'tool_call');
     if (!lastToolCall) return { allowed: true };
 
-    const hasContradictionSignal = this.options.contradictionKeywords.some(word => 
-      content.toLowerCase().includes(word.toLowerCase())
+    // FIX: Added optional chaining and a fallback empty array to satisfy TypeScript strict mode
+    const keywords = this.options.contradictionKeywords || [];
+    const hasContradictionSignal = keywords.some(word => 
+      word && content.toLowerCase().includes(word.toLowerCase())
     );
 
     if (hasContradictionSignal && this.options.strictness === 'high') {
