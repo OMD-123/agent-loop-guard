@@ -6,12 +6,12 @@ export const tool = (name: string, args = {}) => ({
   tool: name,
   args,
   timestamp: Date.now(),
-});
+} as AgentStep);
 
 export const llm = (content: string) => ({
   type: 'llm_response' as const,
   content,
   timestamp: Date.now(),
-});
+} as AgentStep);
 
 export const isBlocked = (decision: any) => !decision.allowed;

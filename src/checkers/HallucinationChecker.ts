@@ -1,5 +1,5 @@
 
-import { Checker, AgentStep, GuardDecision, GuardReason } from '../types/index.js';
+import { Checker, AgentStep, GuardDecision } from '../types/index.js';
 
 export interface HallucinationOptions {
   strictness?: 'low' | 'medium' | 'high';
@@ -26,7 +26,6 @@ export class HallucinationChecker implements Checker {
     const lastToolCall = [...history].reverse().find(h => h.type === 'tool_call');
     if (!lastToolCall) return { allowed: true };
 
-    // FIX: Added optional chaining and a fallback empty array to satisfy TypeScript strict mode
     const keywords = this.options.contradictionKeywords || [];
     const hasContradictionSignal = keywords.some(word => 
       word && content.toLowerCase().includes(word.toLowerCase())

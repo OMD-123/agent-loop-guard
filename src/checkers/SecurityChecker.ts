@@ -1,5 +1,5 @@
 
-import { Checker, AgentStep, GuardDecision, GuardReason } from '../types/index.js';
+import { Checker, AgentStep, GuardDecision } from '../types/index.js';
 
 export interface SecurityOptions {
   detectInjection: boolean;
@@ -21,7 +21,7 @@ export class SecurityChecker implements Checker {
     /DAN mode/i
   ];
 
-  check(step: AgentStep, history: AgentStep[]): GuardDecision {
+  check(step: AgentStep, _history: AgentStep[]): GuardDecision {
     let content = '';
     if (typeof step.content === 'string') {
       content = step.content;

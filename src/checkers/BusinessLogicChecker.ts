@@ -1,5 +1,5 @@
 
-import { Checker, AgentStep, GuardDecision, GuardReason } from '../types/index.js';
+import { Checker, AgentStep, GuardDecision } from '../types/index.js';
 
 export interface LogicOptions {
   validator: (step: AgentStep) => boolean;
@@ -11,7 +11,7 @@ export class BusinessLogicChecker implements Checker {
 
   constructor(private options: LogicOptions) {}
 
-  check(step: AgentStep, history: AgentStep[]): GuardDecision {
+  check(step: AgentStep, _history: AgentStep[]): GuardDecision {
     if (!this.options.validator(step)) {
       return { 
         allowed: false, 

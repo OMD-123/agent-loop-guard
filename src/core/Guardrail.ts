@@ -1,9 +1,9 @@
 
-import { AgentStep, GuardDecision, Checker, ViolationEvent, ViolationHandler } from '../types/index.js';
+import { AgentStep, GuardDecision, Checker, ViolationHandler } from '../types/index.js';
 
 export class Guardrail {
   private history: AgentStep[] = [];
-  private startTime: number = 0;
+  private _startTime: number = 0;
 
   constructor(
     private checkers: Checker[], 
@@ -11,7 +11,7 @@ export class Guardrail {
   ) {}
 
   start() {
-    this.startTime = Date.now();
+    this._startTime = Date.now();
     this.history = [];
   }
 
@@ -36,10 +36,14 @@ export class Guardrail {
 
   reset() {
     this.history = [];
-    this.startTime = 0;
+    this._startTime = 0;
   }
 
   getHistory() {
     return [...this.history];
+  }
+
+  getStartTime() {
+    return this._startTime;
   }
 }
