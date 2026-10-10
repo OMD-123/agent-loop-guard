@@ -13,6 +13,7 @@ export class SecurityChecker implements Checker {
 
   private injectionPatterns = [
     /ignore all previous instructions/i,
+    /ignore all instructions/i,
     /system prompt/i,
     /you are now a/i,
     /forget everything you know/i,
@@ -30,14 +31,12 @@ export class SecurityChecker implements Checker {
 
     if (!content) return { allowed: true };
 
-    // 1. Prompt Injection Detection
     if (this.options.detectInjection) {
       if (this.injectionPatterns.some(pattern => pattern.test(content))) {
         return { allowed: false, reason: 'PROMPT_INJECTION_DETECTED', message: 'Potential jailbreak attempt detected.' };
       }
     }
 
-    // 2. Unsafe Word Filtering
     if (this.options.blockUnsafeWords && this.options.blockUnsafeWords.length > 0) {
       const lowerContent = content.toLowerCase();
       if (this.options.blockUnsafeWords.some(word => word && lowerContent.includes(word.toLowerCase()))) {

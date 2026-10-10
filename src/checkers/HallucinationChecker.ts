@@ -2,29 +2,30 @@
 import { Checker, AgentStep, GuardDecision, GuardReason } from '../types/index.js';
 
 export interface HallucinationOptions {
-  strictness: 'low' | 'medium' | 'high';
-  contradictionKeywords: string[];
+  strictness?: 'low' | 'medium' | 'high';
+  contradictionKeywords?: string[];
 }
 
 export class HallucinationChecker implements Checker {
   name = 'HallucinationChecker';
+  private options: HallucinationOptions;
 
-  constructor(private options: HallucinationOptions = { 
-    strictness: 'medium', 
-    contradictionKeywords: ['actually', 'however', 'incorrectly', 'instead of'] 
-  }) {}
+  constructor(options: HallucinationOptions = {}) {
+    this.options = {
+      strictness: options.strictness || 'medium',
+      contradictionKeywords: options.contradictionKeywords || ['actually', 'however', 'incorrectly', 'instead of']
+    };
+  }
 
   check(step: AgentStep, history: AgentStep[]): GuardDecision {
     if (step.type !== 'llm_response') return { allowed: true };
 
     const content = typeof step.content === 'string' ? step.content : JSON.stringify(step.content);
-    
-    // Look for the last tool call in history to compare against
+    if (!content) return { allowed: true };
+
     const lastToolCall = [...history].reverse().find(h => h.type === 'tool_call');
     if (!lastToolCall) return { allowed: true };
 
-    // Heuristic: If the LLM output contains contradiction keywords 
-    // AND the tool output was likely different, flag it.
     const hasContradictionSignal = this.options.contradictionKeywords.some(word => 
       content.toLowerCase().includes(word.toLowerCase())
     );
