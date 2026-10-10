@@ -1,1 +1,2 @@
-export function guardMiddleware(req: any, res: any, next: any) { return next(); }
+
+export function guardMiddleware(_req: any, _res: any, next: any) { return next(); }
