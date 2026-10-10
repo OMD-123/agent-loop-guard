@@ -1,7 +1,7 @@
 {
   "name": "agent-loop-guard-js",
-  "version": "2.0.2",
-  "description": "High-performance safety utility to protect AI agents from runaway loops, token drain, and uncontrolled execution. Zero-dependency & TypeScript-first.",
+  "version": "3.0.0",
+  "description": "Comprehensive agent guardrail framework: protects AI agents from runaway loops, prompt injection, hallucinations, and unsafe outputs.",
   "keywords": [
     "throttling",
     "guard",
@@ -53,7 +53,9 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md",
+    "MIGRATION.md"
   ],
   "sideEffects": false,
   "scripts": {

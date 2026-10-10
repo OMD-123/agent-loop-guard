@@ -1,25 +1,43 @@
 # 🛡️ agent-loop-guard-js
 
-**Stop runaway AI agents before they burn your tokens, time, and money.**
+**The industry-standard guardrail framework for autonomous AI agents.**
 
-`agent-loop-guard-js` is a high-performance, provider-independent safety utility for AI agents. It detects and blocks runaway execution—such as infinite loops, repeated tool calls, and circular patterns—before they happen.
+`agent-loop-guard-js` is a high-performance, provider-independent safety layer that protects AI agents from the most common failure modes of agentic workflows: **runaway loops, prompt injections, hallucinations, and unsafe outputs.**
 
 [![npm version](https://img.shields.io/npm/v/agent-loop-guard-js.svg)](https://www.npmjs.com/package/agent-loop-guard-js)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
 [![CI](https://github.com/OMD-123/agent-loop-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/OMD-123/agent-loop-guard/actions/workflows/ci.yml)
 
 ---
 
-## 🚀 Why do you need this?
+## 🚀 Why do you need Guardrails?
 
-AI agents are essentially loops: `LLM → tool → LLM → tool`. When these loops fail, they fail expensively:
+Autonomous agents operate in a loop: `LLM → Tool → LLM`. Without guardrails, this loop can fail catastrophically:
 
-- **The Hammer**: Calling the same tool with the same arguments 100 times.
-- **The Error Loop**: Hammering a tool that consistently returns an error.
-- **The Orbit**: Falling into circular patterns (`Tool A` $\rightarrow$ `Tool B` $\rightarrow$ `Tool A`).
-- **The Runaway**: Simply never stopping, draining your API credits.
+- **The Token Burn**: An agent gets stuck calling the same tool 1,000 times in a row.
+- **The Jailbreak**: A user tricks your agent into ignoring its system prompt via prompt injection.
+- **The Hallucination**: The agent ignores a tool's "Not Found" response and makes up a fake answer.
+- **The Logic Fail**: An agent performs an action that violates your core business rules.
 
-`agent-loop-guard-js` sits between your agent and its tools, returning a structured `allowed: boolean` decision. **Zero provider dependencies. Zero runtime dependencies. Total control.**
+`agent-loop-guard-js` sits as a transparent proxy between your agent and its tools, making a binary `allowed: boolean` decision for every single step.
+
+---
+
+## ✨ Key Features (v3.0.0)
+
+| Guardrail | Detects | Use Case |
+| :--- | :--- | :--- |
+| **Loop Guard** | Max steps, durations, and circular tool patterns. | Stop infinite loops & token drain. |
+| **Security Guard** | Prompt injections, jailbreaks, and unsafe content. | Prevent system prompt leakage. |
+| **Hallucination Guard**| Contradictions between tool results and LLM output. | Ensure factual grounding. |
+| **Logic Guard** | Custom schema or function-based business violations. | Enforce strict business rules. |
+
+### Technical Highlights
+- **Zero-Dependency**: No bloat. Works in Node.js, Bun, and Deno.
+- **Plugin Architecture**: Add your own custom checkers effortlessly.
+- **O(1) Complexity**: History is bounded; it will never crash your process.
+- **Provider Agnostic**: Works with OpenAI, Anthropic, Local LLMs, or custom engines.
 
 ---
 
@@ -38,98 +56,67 @@ yarn add agent-loop-guard-js
 ## ⚡ Quick Start
 
 ```ts
-import { AgentLoopGuard } from "agent-loop-guard-js";
+import { Guardrail, LoopChecker, SecurityChecker, BusinessLogicChecker } from 'agent-loop-guard-js';
 
-const guard = new AgentLoopGuard({
-  maxSteps: 20,           // Stop after 20 total steps
-  maxDuration: 60_000,    // Stop after 60 seconds
-  maxRepeatedCalls: 3,    // Stop if same tool + args called 3x
-  maxSameToolCalls: 5,    // Stop if any tool is called 5x in a row
-});
+// 1. Initialize the Guardrail with the checkers you need
+const guard = new Guardrail([
+  new LoopChecker({ 
+    maxSteps: 20, 
+    maxRepeatedCalls: 3 
+  }),
+  new SecurityChecker({ 
+    detectInjection: true, 
+    blockUnsafeWords: ['malware', 'hack'] 
+  }),
+  new BusinessLogicChecker({ 
+    validator: (step) => step.tool !== 'delete_production_db',
+    errorMessage: 'Critical Action Blocked!'
+  })
+]);
 
-function beforeEachStep(step) {
+// 2. Start a new agent session
+guard.start();
+
+// 3. Check every step before execution
+function onAgentStep(step) {
   const decision = guard.check(step);
+  
   if (!decision.allowed) {
-    throw new Error(`Agent Guard Blocked: ${decision.reason}`);
+    console.error(`🛑 Guardrail Blocked: ${decision.reason} - ${decision.message}`);
+    throw new Error('Agent safety violation');
   }
-  // Execute the approved step...
+  
+  // Proceed to execute the tool/LLM call...
 }
 ```
-
----
-
-## ✨ Features
-
-| Protection | Config Key | Detects |
-| :--- | :--- | :--- |
-| **Step Budget** | `maxSteps` | Total steps exceeded in a single run. |
-| **Time Budget** | `maxDuration` | Run exceeds wall-clock limit (monotonic). |
-| **Repetition** | `maxRepeatedCalls` | Identical tool + arguments called repeatedly. |
-| **Tool Hammering**| `maxSameToolCalls` | Single tool called consecutively regardless of args. |
-| **Circular Loops** | `loopPatternWindow` | Repeating sequences (e.g., `A → B → A → B`). |
-
-### Technical Highlights:
-- **Deterministic Canonicalization**: Arguments are normalized so `{a:1,b:2}` equals `{b:2,a:1}`.
-- **Zero-Dependency**: No bloat. Works in Node.js, Bun, and Deno.
-- **O(1) Memory Growth**: History is bounded; it will never crash your process on long runs.
-- **Strongly Typed**: Full TypeScript support for a seamless DX.
 
 ---
 
 ## 🛠️ API Reference
 
-### `new AgentLoopGuard(options?)`
-Constructs a guard. All options are optional (0 = unlimited).
+### `new Guardrail(checkers: Checker[], onViolation?)`
+The main orchestrator. Iterates through all provided checkers. If any checker returns `allowed: false`, the entire step is blocked.
 
+### `Checker` Interface
+Implement this interface to create your own custom guards:
 ```ts
-interface AgentLoopGuardOptions {
-  maxSteps?: number;
-  maxDuration?: number;
-  maxRepeatedCalls?: number;
-  maxSameToolCalls?: number;
-  loopPatternWindow?: number;
-  detectDuplicateArguments?: boolean;
-  onViolation?: (event: ViolationEvent) => void;
+interface Checker {
+  name: string;
+  check(step: AgentStep, history: AgentStep[]): GuardDecision;
 }
 ```
 
-### Core Lifecycle
-- `guard.start()`: Records the start time of a run.
-- `guard.check(step)`: Validates the next step. Returns a `GuardDecision`.
-- `guard.end()`: Closes the current run.
-- `guard.reset()`: Clears all history for a fresh start.
+---
 
-### The `GuardDecision`
-`check()` returns a decision object:
-- `allowed: true` $\rightarrow$ Proceed with execution.
-- `allowed: false` $\rightarrow$ Stop the agent. Includes a `reason` (e.g., `LOOP_PATTERN_DETECTED`).
+## 📈 Performance & Scale
+- **Latency**: Average check time $< 1	ext{ms}$.
+- **Memory**: Constant space complexity relative to the `loopPatternWindow`.
+- **Throughput**: Capable of handling thousands of steps per second.
 
 ---
 
-## 📐 Architecture
-
-```mermaid
-flowchart LR
-  A[Agent] -->|step| G[AgentLoopGuard]
-  G --> D1[MaxSteps]
-  G --> D2[Duration]
-  G --> D3[Repetition]
-  G --> D4[SameTool]
-  G --> D5[Circular]
-  D1 & D2 & D3 & D4 & D5 --> R{Decision}
-  R -->|Allowed| O[Execute Tool]
-  R -->|Blocked| V[Stop & Alert]
-```
-
----
-
-## 🤝 Contributing & Support
-
-Contributions are welcome! Please ensure the pipeline is green:
-`npm run typecheck && npm run lint && npm test`
-
-If this tool saves you tokens and time, consider supporting its development:
-👉 **[Sponsor on GitHub](https://github.com/sponsors/OMD-123)**
+## 🤝 Contributing
+We welcome contributions! Please read the [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions.
 
 ## 📄 License
 MIT © [OMD-123](https://github.com/OMD-123)

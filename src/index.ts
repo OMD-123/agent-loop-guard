@@ -1,17 +1,10 @@
-/**
- * agent-loop-guard
- *
- * Provider-independent safety and reliability utility for AI agents. Detects
- * runaway agent execution: too many steps, too long a duration, repeated tool
- * calls, same-tool hammering, and circular/looping step patterns.
- *
- * The guard only OBSERVES steps — it never executes tools, models, or any
- * caller code. Integration is a few lines around your existing agent loop.
- */
 
-export { AgentLoopGuard } from "./core/AgentLoopGuard.js";
-export { AgentLoopGuardError } from "./errors/AgentLoopGuardError.js";
-export { canonicalizeKey } from "./normalization/canonicalize.js";
+export { Guardrail } from './core/Guardrail.js';
+export { AgentLoopGuard } from './core/AgentLoopGuard.js';
+export { LoopChecker } from './checkers/LoopChecker.js';
+export { SecurityChecker } from './checkers/SecurityChecker.js';
+export { BusinessLogicChecker } from './checkers/BusinessLogicChecker.js';
+export { HallucinationChecker } from './checkers/HallucinationChecker.js';
 
 export type {
   AgentStep,
@@ -20,9 +13,21 @@ export type {
   GuardDecision,
   ViolationEvent,
   ViolationHandler,
-  GuardStats,
-} from "./types/index.js";
+  Checker,
+} from './types/index.js';
 
 export type {
-  AgentLoopGuardOptions,
-} from "./core/options.js";
+  LoopOptions,
+} from './checkers/LoopChecker.js';
+
+export type {
+  SecurityOptions,
+} from './checkers/SecurityChecker.js';
+
+export type {
+  LogicOptions,
+} from './checkers/BusinessLogicChecker.js';
+
+export type {
+  HallucinationOptions,
+} from './checkers/HallucinationChecker.js';
