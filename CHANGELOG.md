@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] - 2026-11-03
+
+### Fixed
+
+- **The release workflow can publish again.** The `v4.0.0` Release run failed
+  with `ENEEDAUTH` because the repository had no `NPM_TOKEN` secret. The
+  workflow now resolves the package version, checks whether it is already on
+  the registry, and skips the publish when it is — so re-running a tag push
+  is idempotent instead of failing.
+- The publish flags now come from the `NPM_PUBLISH_FLAGS` repository
+  variable, so provenance can be enabled without editing the workflow.
+
 ## [4.0.0] - 2026-11-03
 
 A correctness and packaging release. v4 fixes every defect listed in

@@ -1,6 +1,6 @@
 {
   "name": "agent-loop-guard-js",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Zero-dependency guardrail framework for AI agents: stops runaway loops, prompt injection, hallucination and unsafe tool calls before they execute.",
   "keywords": [
     "ai",
