@@ -110,8 +110,7 @@
     }
   ],
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "sideEffectsNote": "The package is side-effect free.",
   "contributing": {

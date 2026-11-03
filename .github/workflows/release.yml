@@ -49,6 +49,9 @@ jobs:
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Required for npm provenance generation.
+          NPM_CONFIG_PROVENANCE: true
+          ID_TOKEN_PERMISSIONS: write
 
       - name: Create the GitHub release
         uses: softprops/action-gh-release@v2
