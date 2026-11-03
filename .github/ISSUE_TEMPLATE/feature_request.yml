@@ -1,0 +1,58 @@
+name: Feature request
+description: Suggest a new checker, option, or capability
+title: "[Feature]: "
+labels: ["enhancement", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature. Concrete use cases help a lot.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the failure mode or gap, not just the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API
+      description: If you have a specific API in mind, sketch it in TypeScript.
+      render: typescript
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area does this affect?
+      options:
+        - A new checker
+        - Guardrail orchestration
+        - AgentLoopGuard
+        - New option on an existing checker
+        - Documentation
+        - Tooling / DX
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and this is not a duplicate.
+          required: true
+        - label: This feature can be implemented without adding a runtime dependency.
+          required: false

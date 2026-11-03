@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or usage help
+    url: https://github.com/OMD-123/agent-loop-guard/discussions
+    about: Ask questions and share how you are using the guard.
+  - name: Report a security vulnerability
+    url: https://github.com/OMD-123/agent-loop-guard/security/advisories/new
+    about: Report security issues privately. Please do not open a public issue.

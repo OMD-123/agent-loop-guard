@@ -18,6 +18,19 @@ export default tseslint.config(
     },
   },
   {
+    // Build scripts are Node CLIs: they legitimately log and exit non-zero.
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+      },
+    },
+    rules: {
+      "no-console": "off",
+    },
+  },
+  {
     // Examples are runnable demos; console output and unused vars are common
     files: ["examples/**/*.ts"],
     rules: {

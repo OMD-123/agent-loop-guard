@@ -1,97 +1,119 @@
 {
   "name": "agent-loop-guard-js",
-  "version": "3.0.0",
-  "description": "Comprehensive agent guardrail framework: protects AI agents from runaway loops, prompt injection, hallucinations, and unsafe outputs.",
+  "version": "4.0.0",
+  "description": "Zero-dependency guardrail framework for AI agents: stops runaway loops, prompt injection, hallucination and unsafe tool calls before they execute.",
   "keywords": [
-    "throttling",
-    "guard",
-    "runaway",
-    "agent-loop",
-    "agentic-workflow",
-    "llm",
-    "typescript",
-    "safety",
     "ai",
-    "ai-reliability",
-    "tool-call",
-    "token-saver",
-    "execution-bounds",
-    "autonomous-agents",
     "agent",
-    "agent-security",
-    "loop-detection",
-    "llm-safety",
+    "agent-safety",
+    "agentic",
     "ai-orchestration",
+    "ai-safety",
+    "ai-reliability",
+    "autonomous-agents",
+    "circuit-breaker",
+    "execution-bounds",
+    "guardrail",
+    "guardrails",
+    "hallucination-detection",
+    "llm",
+    "llm-safety",
+    "loop-detection",
+    "prompt-injection",
     "rate-limiting",
-    "circuit-breaker"
+    "runaway",
+    "safety",
+    "tool-calling",
+    "typescript",
+    "zero-dependency"
   ],
   "license": "MIT",
   "author": {
-    "name": "OMD-123",
+    "name": "Om Dandagvhal",
     "email": "omd4485@gmail.com",
     "url": "https://github.com/OMD-123"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/OMD-123/agent-loop-guard.git",
-    "directory": ""
+    "url": "git+https://github.com/OMD-123/agent-loop-guard.git"
   },
   "bugs": {
     "url": "https://github.com/OMD-123/agent-loop-guard/issues"
   },
-  "homepage": "https://agent-loop-guard.omd123.dev",
+  "homepage": "https://github.com/OMD-123/agent-loop-guard#readme",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
     "README.md",
     "LICENSE",
     "CHANGELOG.md",
-    "MIGRATION.md"
+    "MIGRATION.md",
+    "SECURITY.md"
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
+    "clean": "node scripts/clean.mjs",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:esm": "tsc -p tsconfig.build.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:types": "node scripts/finalize-types.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
+    "bench": "vitest bench --run",
     "prepack": "npm run build",
-    "prepare": "npm run build",
+    "prepublishOnly": "npm run verify",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "attw": "attw --pack .",
     "release": "standard-version && git push --follow-tags origin main && npm publish",
     "postversion": "git push && git push --tags"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
     "@types/node": "^22.13.0",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser": "^8.24.0",
+    "@vitest/coverage-v8": "^3.0.7",
+    "@arethetypeswrong/cli": "^0.18.5",
     "eslint": "^9.23.0",
+    "standard-version": "^9.5.0",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0",
-    "vitest": "^3.0.7",
-    "standard-version": "^9.5.0",
-    "@typescript-eslint/eslint-plugin": "^8.24.0",
-    "@typescript-eslint/parser": "^8.24.0"
+    "vitest": "^3.0.7"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "allowScripts": {
-    "esbuild@0.28.2": true
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/OMD-123"
+    }
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
-  "funding": {
-    "type": "github",
-    "url": "https://github.com/sponsors/OMD-123"
-  },
+  "sideEffectsNote": "The package is side-effect free.",
   "contributing": {
     "url": "https://github.com/OMD-123/agent-loop-guard/blob/main/CONTRIBUTING.md"
   }

@@ -1,4 +1,3 @@
-
 name: CI
 
 on:
@@ -7,12 +6,19 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: Node ${{ matrix.node-version }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [20.x] # Focus on the most stable LTS for faster CI
+        os: [ubuntu-latest]
+        node-version: ['18.x', '20.x', '22.x']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,7 +30,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build
         run: npm run build
@@ -37,3 +43,98 @@ jobs:
 
       - name: Test
         run: npm test
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/coverage-final.json
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  package:
+    name: Package integrity
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Check the published type layout
+        run: npm run attw
+
+      - name: Verify the tarball contents
+        run: |
+          npm pack --dry-run --json > pack.json
+          node -e "
+            const pack = require('./pack.json')[0];
+            const names = pack.files.map(f => f.path);
+            const required = ['dist/esm/index.js','dist/esm/index.d.ts','dist/cjs/index.js','dist/cjs/index.d.ts'];
+            for (const file of required) {
+              if (!names.includes(file)) {
+                console.error('missing from tarball: ' + file);
+                process.exit(1);
+              }
+            }
+            const stale = names.filter(n => n.includes('dist/detectors/') || n.includes('GuardState'));
+            if (stale.length) {
+              console.error('stale artifacts in tarball: ' + stale.join(', '));
+              process.exit(1);
+            }
+            console.log('tarball OK: ' + names.length + ' files, ' + pack.size + ' bytes');
+          "
+
+      - name: Install the tarball into a clean project and import it
+        run: |
+          npm pack
+          mkdir -p /tmp/consumer && cd /tmp/consumer
+          npm init -y > /dev/null
+          npm install "$GITHUB_WORKSPACE"/agent-loop-guard-js-*.tgz
+          node --input-type=module -e "
+            import { Guardrail, LoopChecker } from 'agent-loop-guard-js';
+            const g = new Guardrail([new LoopChecker({ maxSteps: 1 })]);
+            g.start();
+            g.check({ type: 'llm_response', content: 'ok', timestamp: Date.now() });
+            const d = g.check({ type: 'llm_response', content: 'ok', timestamp: Date.now() });
+            if (d.allowed) { console.error('guard did not block'); process.exit(1); }
+            console.log('ESM import OK:', d.reason);
+          "
+          node -e "
+            const { Guardrail, LoopChecker } = require('agent-loop-guard-js');
+            const g = new Guardrail([new LoopChecker({ maxSteps: 1 })]);
+            g.start();
+            g.check({ type: 'llm_response', content: 'ok', timestamp: Date.now() });
+            const d = g.check({ type: 'llm_response', content: 'ok', timestamp: Date.now() });
+            if (d.allowed) { console.error('guard did not block'); process.exit(1); }
+            console.log('CJS require OK:', d.reason);
+          "
