@@ -2,6 +2,8 @@ node_modules/
 dist/
 coverage/
 *.log
+pack-fixtures/
+*.tgz
 .DS_Store
 .env
 .env.*

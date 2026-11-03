@@ -95,24 +95,10 @@ jobs:
 
       - name: Verify the tarball contents
         run: |
-          npm pack --dry-run --json > pack.json
-          node -e "
-            const pack = require('./pack.json')[0];
-            const names = pack.files.map(f => f.path);
-            const required = ['dist/esm/index.js','dist/esm/index.d.ts','dist/cjs/index.js','dist/cjs/index.d.ts'];
-            for (const file of required) {
-              if (!names.includes(file)) {
-                console.error('missing from tarball: ' + file);
-                process.exit(1);
-              }
-            }
-            const stale = names.filter(n => n.includes('dist/detectors/') || n.includes('GuardState'));
-            if (stale.length) {
-              console.error('stale artifacts in tarball: ' + stale.join(', '));
-              process.exit(1);
-            }
-            console.log('tarball OK: ' + names.length + ' files, ' + pack.size + ' bytes');
-          "
+          # `npm pack --json` prints the build script output before the JSON,
+          # so the JSON has to be extracted from the tail of the output.
+          npm pack --dry-run --json > pack.log 2>&1 || true
+          node scripts/check-tarball.mjs pack.log
 
       - name: Install the tarball into a clean project and import it
         run: |
