@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Required for npm provenance (OIDC).
       id-token: write
     steps:
       - name: Checkout
@@ -45,15 +46,37 @@ jobs:
       - name: Check the published type layout
         run: npm run attw
 
+      - name: Resolve the version and check whether it is already published
+        id: version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if npm view "agent-loop-guard-js@$VERSION" version > /dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$VERSION is already on npm — skipping the publish step."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        # Skipped when the version is already on the registry, so re-running a
+        # tag push does not fail the workflow.
+        if: steps.version.outputs.published == 'false'
+        run: |
+          # `NPM_TOKEN` is a publish-scoped automation token. When npm trusted
+          # publishing is enabled for this package the token is unnecessary and
+          # provenance is generated from the OIDC identity instead.
+          npm publish --access public ${NPM_PUBLISH_FLAGS}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          # Required for npm provenance generation.
-          NPM_CONFIG_PROVENANCE: true
-          ID_TOKEN_PERMISSIONS: write
+          # Provenance is only generated when the runner can obtain an OIDC
+          # token *and* npm trusts this workflow. Set NPM_PUBLISH_FLAGS=--provenance
+          # once trusted publishing is configured.
+          NPM_PUBLISH_FLAGS: ${{ vars.NPM_PUBLISH_FLAGS }}
 
       - name: Create the GitHub release
+        if: steps.version.outputs.published == 'false'
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
