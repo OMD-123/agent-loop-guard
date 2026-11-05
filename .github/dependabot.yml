@@ -8,7 +8,13 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - dependencies
-      - github-actions
+    allow:
+      - dependency-type: all
+    automerged_updates:
+      - match:
+          update_type: "version-update:semver-patch"
+          dependency_type: "development"
+        when: "ci-passed"
 
   - package-ecosystem: github-actions
     directory: '/'
@@ -18,3 +24,9 @@ updates:
     labels:
       - dependencies
       - github-actions
+    allow:
+      - dependency-type: all
+    automerged_updates:
+      - match:
+          update_type: "version-update:semver-patch"
+        when: "ci-passed"
